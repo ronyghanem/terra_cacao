@@ -440,6 +440,9 @@ export default function Home() {
             <p>
               <a href="#top">Newsletter archive</a>
             </p>
+            <p>
+    <a href="/admin/login">Admin</a>
+  </p>
           </div>
         </div>
 
