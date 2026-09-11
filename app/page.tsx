@@ -2,6 +2,7 @@ import MobileNav from "@/components/MobileNav";
 import Stats from "@/components/Stats";
 import ReducedMotionVideo from "@/components/ReducedMotionVideo";
 import ContactForm from "@/components/ContactForm";
+import ContentBars from "@/components/ContentBars";
 
 export default function Home() {
   return (
@@ -171,99 +172,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bar-grid-cards">
-              <article className="bar-card">
-                <div className="bar-card-top">
-                  <h3>Ambanja, Madagascar</h3>
-                  <span className="bar-price">$9 / 70g</span>
-                </div>
-
-                <ul className="bar-meta">
-                  <li>
-                    <span>Cacao</span>70%
-                  </li>
-                  <li>
-                    <span>Style</span>Dark
-                  </li>
-                  <li>
-                    <span>Ferment</span>6 days
-                  </li>
-                </ul>
-
-                <p className="bar-notes">
-                  Red berry, citrus peel, light tannin.
-                </p>
-              </article>
-
-              <article className="bar-card">
-                <div className="bar-card-top">
-                  <h3>Chuao, Venezuela</h3>
-                  <span className="bar-price">$11 / 70g</span>
-                </div>
-
-                <ul className="bar-meta">
-                  <li>
-                    <span>Cacao</span>75%
-                  </li>
-                  <li>
-                    <span>Style</span>Dark
-                  </li>
-                  <li>
-                    <span>Ferment</span>7 days
-                  </li>
-                </ul>
-
-                <p className="bar-notes">
-                  Dried fig, toasted hazelnut, long finish.
-                </p>
-              </article>
-
-              <article className="bar-card">
-                <div className="bar-card-top">
-                  <h3>Piura, Peru</h3>
-                  <span className="bar-price">$10 / 70g</span>
-                </div>
-
-                <ul className="bar-meta">
-                  <li>
-                    <span>Cacao</span>66%
-                  </li>
-                  <li>
-                    <span>Style</span>Dark milk
-                  </li>
-                  <li>
-                    <span>Ferment</span>5 days
-                  </li>
-                </ul>
-
-                <p className="bar-notes">
-                  Caramel, banana, soft cocoa finish.
-                </p>
-              </article>
-
-              <article className="bar-card">
-                <div className="bar-card-top">
-                  <h3>House Milk</h3>
-                  <span className="bar-price">$8 / 70g</span>
-                </div>
-
-                <ul className="bar-meta">
-                  <li>
-                    <span>Beans</span>Peru + Madagascar
-                  </li>
-                  <li>
-                    <span>Cacao</span>45%
-                  </li>
-                  <li>
-                    <span>Style</span>Milk
-                  </li>
-                </ul>
-
-                <p className="bar-notes">
-                  Our everyday bar — malty, smooth, not overly sweet.
-                </p>
-              </article>
-            </div>
+           
+    <ContentBars />
           </div>
         </section>
 
