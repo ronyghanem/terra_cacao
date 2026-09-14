@@ -3,8 +3,11 @@ import Stats from "@/components/Stats";
 import ReducedMotionVideo from "@/components/ReducedMotionVideo";
 import ContactForm from "@/components/ContactForm";
 import ContentBars from "@/components/ContentBars";
+import { getUserSession } from "@/lib/userAuth";
 
-export default function Home() {
+export default async function Home() {
+  const userId = await getUserSession();
+const isLoggedIn = Boolean(userId);
   return (
     <>
       <a className="skip-link" href="#main">
@@ -20,9 +23,27 @@ export default function Home() {
           {/* React mobile navigation */}
           <MobileNav />
 
-          <a className="btn btn-line nav-cta" href="#bars">
-            Shop bars
-          </a>
+<div className="header-actions">
+  <a className="btn btn-line nav-cta" href="#bars">
+    Shop bars
+  </a>
+
+  {isLoggedIn ? (
+    <a className="btn btn-line" href="/dashboard">
+      My Account
+    </a>
+  ) : (
+    <>
+      <a className="btn btn-line" href="/login">
+        Sign in
+      </a>
+
+      <a className="btn btn-solid" href="/register">
+        Register
+      </a>
+    </>
+  )}
+</div>
         </div>
       </header>
 
