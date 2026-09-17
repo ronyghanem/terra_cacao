@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     const url = new URL("/login", request.url);
 
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 303);
   } catch (error) {
     console.error("Logout error:", error);
 
