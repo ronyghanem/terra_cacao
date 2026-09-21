@@ -3,6 +3,7 @@ import Stats from "@/components/Stats";
 import ReducedMotionVideo from "@/components/ReducedMotionVideo";
 import ContactForm from "@/components/ContactForm";
 import ContentBars from "@/components/ContentBars";
+import Services from "@/components/Services";
 import { getUserSession } from "@/lib/userAuth";
 
 export default async function Home() {
@@ -195,6 +196,22 @@ const isLoggedIn = Boolean(userId);
 
            
     <ContentBars />
+          </div>
+        </section>
+
+        {/* SERVICES */}
+        <section className="services" id="services">
+          <div className="wrap">
+            <div className="section-head">
+              <h2>Our services</h2>
+              <p>
+                Explore the experiences and services currently offered by
+                Terra Cacao. This section is managed directly from our
+                service management system.
+              </p>
+            </div>
+
+            <Services />
           </div>
         </section>
 

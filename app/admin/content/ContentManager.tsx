@@ -266,9 +266,14 @@ export default function ContentManagementPage() {
             </p>
           </div>
 
-          <a href="/" className="admin-back">
-            ← Back to website
-          </a>
+          <div className="admin-header-links">
+            <a href="/admin/services" className="admin-back">
+              Manage services
+            </a>
+            <a href="/" className="admin-back">
+              ← Back to website
+            </a>
+          </div>
         </header>
 
         <section className="admin-form-card">

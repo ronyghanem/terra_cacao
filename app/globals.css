@@ -2024,3 +2024,119 @@ button { font-family: inherit; cursor: pointer; }
     font-size: 0.75rem;
   }
 }
+
+/* ---------- Public Service Management Display ---------- */
+
+.services {
+  padding: 5.5rem 0;
+  background: var(--paper);
+}
+
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.service-card {
+  background: var(--cream);
+  border: 1px solid var(--cacao-line);
+  border-radius: var(--radius-md);
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 230px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(169, 129, 46, 0.65);
+}
+
+.service-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--cacao-line);
+}
+
+.service-category {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--ruby);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.service-card h3 {
+  margin: 0;
+}
+
+.service-price {
+  flex-shrink: 0;
+  color: var(--gold);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.service-card p {
+  color: #5c4c3d;
+  font-size: 0.96rem;
+  margin-bottom: 1.5rem;
+}
+
+.service-duration {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cacao-line);
+  color: #7a6a58;
+  font-size: 0.85rem;
+}
+
+.service-duration strong {
+  color: var(--ink);
+}
+
+/* Service admin navigation */
+
+.admin-header-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Responsive service cards */
+
+@media (max-width: 960px) {
+  .service-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header {
+    flex-direction: column;
+  }
+
+  .admin-header-links {
+    justify-content: flex-start;
+  }
+
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

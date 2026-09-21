@@ -22,6 +22,7 @@ export default function MobileNav() {
         <span></span>
         <span></span>
         <span></span>
+
         <span className="sr-only">
           {isOpen ? "Close menu" : "Open menu"}
         </span>
@@ -37,6 +38,10 @@ export default function MobileNav() {
 
         <a href="#process" onClick={closeMenu}>
           Process
+        </a>
+
+        <a href="#services" onClick={closeMenu}>
+          Services
         </a>
 
         <a href="#bars" onClick={closeMenu}>
