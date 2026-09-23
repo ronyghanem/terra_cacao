@@ -270,6 +270,12 @@ export default function ContentManagementPage() {
             <a href="/admin/services" className="admin-back">
               Manage services
             </a>
+            <a
+  href="/admin/requests"
+  className="admin-back"
+>
+  Customer Requests
+</a>
             <a href="/" className="admin-back">
               ← Back to website
             </a>

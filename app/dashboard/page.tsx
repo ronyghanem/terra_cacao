@@ -4,6 +4,8 @@ import User from "@/models/User";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getUserSession } from "@/lib/userAuth";
 import DashboardForm from "./DashboardForm";
+import RequestForm from "./RequestForm";
+import MyRequests from "./MyRequests";
 
 export default async function DashboardPage() {
   const userId = await getUserSession();
@@ -23,14 +25,17 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="dashboard-page">
-      <DashboardForm
-        user={{
-          name: user.name,
-          email: user.email,
-          createdAt: user.createdAt.toISOString(),
-        }}
-      />
-    </main>
-  );
+  <main className="dashboard-page">
+    <DashboardForm
+      user={{
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt.toISOString(),
+      }}
+    />
+
+    <RequestForm />
+    <MyRequests />
+  </main>
+);
 }
