@@ -6,6 +6,17 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { getUserSession } from "@/lib/userAuth";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 
+const REQUEST_STATUSES = [
+  "Pending",
+  "In Progress",
+  "Resolved",
+  "Rejected",
+] as const;
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function POST(
   request: globalThis.Request
 ) {
@@ -120,21 +131,185 @@ export async function POST(
   }
 }
 
-export async function GET() {
+export async function GET(
+  request: globalThis.Request
+) {
   try {
     const isAdmin =
       await isAdminAuthenticated();
+
+    const { searchParams } = new URL(
+      request.url
+    );
+
+    const search = searchParams
+      .get("search")
+      ?.trim();
+
+    const status = searchParams
+      .get("status")
+      ?.trim();
+
+    const dateFrom = searchParams
+      .get("dateFrom")
+      ?.trim();
+
+    const dateTo = searchParams
+      .get("dateTo")
+      ?.trim();
+
+    /*
+     * Validate status filter
+     */
+    if (
+      status &&
+      !REQUEST_STATUSES.includes(
+        status as (typeof REQUEST_STATUSES)[number]
+      )
+    ) {
+      return NextResponse.json(
+        {
+          message: "Invalid request status filter.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const filters: Record<string, unknown> = {};
+
+    /*
+     * Search across:
+     * - customer name
+     * - customer email
+     * - subject
+     * - message
+     */
+    if (search) {
+      const safeSearch =
+        escapeRegex(search);
+
+      const searchRegex = new RegExp(
+        safeSearch,
+        "i"
+      );
+
+      filters.$or = [
+        {
+          customerName: searchRegex,
+        },
+        {
+          customerEmail: searchRegex,
+        },
+        {
+          subject: searchRegex,
+        },
+        {
+          message: searchRegex,
+        },
+      ];
+    }
+
+    /*
+     * Status filter
+     */
+    if (status) {
+      filters.status = status;
+    }
+
+    /*
+     * Date range filter
+     */
+    if (dateFrom || dateTo) {
+      const createdAt: Record<
+        string,
+        Date
+      > = {};
+
+      if (dateFrom) {
+        const startDate = new Date(
+          `${dateFrom}T00:00:00.000Z`
+        );
+
+        if (
+          Number.isNaN(
+            startDate.getTime()
+          )
+        ) {
+          return NextResponse.json(
+            {
+              message:
+                "Invalid start date filter.",
+            },
+            { status: 400 }
+          );
+        }
+
+        createdAt.$gte = startDate;
+      }
+
+      if (dateTo) {
+        const endDate = new Date(
+          `${dateTo}T23:59:59.999Z`
+        );
+
+        if (
+          Number.isNaN(
+            endDate.getTime()
+          )
+        ) {
+          return NextResponse.json(
+            {
+              message:
+                "Invalid end date filter.",
+            },
+            { status: 400 }
+          );
+        }
+
+        createdAt.$lte = endDate;
+      }
+
+      if (
+        createdAt.$gte &&
+        createdAt.$lte &&
+        createdAt.$gte > createdAt.$lte
+      ) {
+        return NextResponse.json(
+          {
+            message:
+              "The start date cannot be after the end date.",
+          },
+          { status: 400 }
+        );
+      }
+
+      filters.createdAt = createdAt;
+    }
 
     await connectToDatabase();
 
     let requests;
 
+    /*
+     * Admin:
+     * Search/filter all customer requests.
+     */
     if (isAdmin) {
-      requests = await CustomerRequest.find()
-        .sort({ createdAt: -1 })
-        .lean();
+      requests =
+        await CustomerRequest.find(
+          filters
+        )
+          .sort({
+            createdAt: -1,
+          })
+          .lean();
     } else {
-      const userId = await getUserSession();
+      /*
+       * Customer:
+       * Only search/filter their own requests.
+       */
+      const userId =
+        await getUserSession();
 
       if (!userId) {
         return NextResponse.json(
@@ -147,9 +322,12 @@ export async function GET() {
 
       requests =
         await CustomerRequest.find({
+          ...filters,
           customer: userId,
         })
-          .sort({ createdAt: -1 })
+          .sort({
+            createdAt: -1,
+          })
           .lean();
     }
 
@@ -157,10 +335,14 @@ export async function GET() {
       data: requests.map((item) => ({
         ...item,
         _id: item._id.toString(),
-        customer: item.customer.toString(),
-        createdAt: item.createdAt.toISOString(),
-        updatedAt: item.updatedAt.toISOString(),
+        customer:
+          item.customer.toString(),
+        createdAt:
+          item.createdAt.toISOString(),
+        updatedAt:
+          item.updatedAt.toISOString(),
       })),
+      total: requests.length,
     });
   } catch (error) {
     console.error(

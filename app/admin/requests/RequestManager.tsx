@@ -27,10 +27,29 @@ const statuses: RequestStatus[] = [
   "Rejected",
 ];
 
+type RequestFilters = {
+  search: string;
+  status: string;
+  dateFrom: string;
+  dateTo: string;
+};
+
+const initialFilters: RequestFilters = {
+  search: "",
+  status: "",
+  dateFrom: "",
+  dateTo: "",
+};
+
 export default function RequestManager() {
   const [requests, setRequests] = useState<
     CustomerRequest[]
   >([]);
+
+  const [filters, setFilters] =
+    useState<RequestFilters>(
+      initialFilters
+    );
 
   const [isLoading, setIsLoading] =
     useState(true);
@@ -41,20 +60,70 @@ export default function RequestManager() {
     useState<string | null>(null);
 
   const [selectedRequest, setSelectedRequest] =
-    useState<CustomerRequest | null>(null);
+    useState<CustomerRequest | null>(
+      null
+    );
 
-  async function fetchRequests() {
+  /*
+   * Fetch requests from the backend
+   * using the current search/filter values.
+   */
+  async function fetchRequests(
+    currentFilters: RequestFilters,
+    signal?: AbortSignal
+  ) {
     try {
       setError("");
+      setIsLoading(true);
+
+      const params =
+        new URLSearchParams();
+
+      if (
+        currentFilters.search.trim()
+      ) {
+        params.set(
+          "search",
+          currentFilters.search.trim()
+        );
+      }
+
+      if (currentFilters.status) {
+        params.set(
+          "status",
+          currentFilters.status
+        );
+      }
+
+      if (currentFilters.dateFrom) {
+        params.set(
+          "dateFrom",
+          currentFilters.dateFrom
+        );
+      }
+
+      if (currentFilters.dateTo) {
+        params.set(
+          "dateTo",
+          currentFilters.dateTo
+        );
+      }
+
+      const query =
+        params.toString();
 
       const response = await fetch(
-        "/api/requests",
+        query
+          ? `/api/requests?${query}`
+          : "/api/requests",
         {
           cache: "no-store",
+          signal,
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -63,8 +132,21 @@ export default function RequestManager() {
         );
       }
 
-      setRequests(result.data || []);
+      setRequests(
+        result.data || []
+      );
     } catch (error) {
+      /*
+       * Ignore requests cancelled because
+       * the user changed a filter quickly.
+       */
+      if (
+        error instanceof DOMException &&
+        error.name === "AbortError"
+      ) {
+        return;
+      }
+
       console.error(
         "Fetch requests error:",
         error
@@ -76,13 +158,51 @@ export default function RequestManager() {
           : "Unable to load customer requests."
       );
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }
 
+  /*
+   * Reload data whenever a search/filter
+   * changes.
+   */
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    const controller =
+      new AbortController();
+
+    /*
+     * Small debounce so we don't send
+     * a request for every keystroke.
+     */
+    const timer =
+      window.setTimeout(() => {
+        fetchRequests(
+          filters,
+          controller.signal
+        );
+      }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [filters]);
+
+  function updateFilter(
+    field: keyof RequestFilters,
+    value: string
+  ) {
+    setFilters((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function clearFilters() {
+    setFilters(initialFilters);
+  }
 
   async function updateStatus(
     id: string,
@@ -97,7 +217,8 @@ export default function RequestManager() {
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             status,
@@ -105,7 +226,8 @@ export default function RequestManager() {
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -117,18 +239,21 @@ export default function RequestManager() {
       const updatedRequest =
         result.data as CustomerRequest;
 
-      setRequests((currentRequests) =>
-        currentRequests.map((request) =>
-          request._id === id
-            ? updatedRequest
-            : request
-        )
+      setRequests(
+        (currentRequests) =>
+          currentRequests.map(
+            (request) =>
+              request._id === id
+                ? updatedRequest
+                : request
+          )
       );
 
-      setSelectedRequest((currentRequest) =>
-        currentRequest?._id === id
-          ? updatedRequest
-          : currentRequest
+      setSelectedRequest(
+        (currentRequest) =>
+          currentRequest?._id === id
+            ? updatedRequest
+            : currentRequest
       );
     } catch (error) {
       console.error(
@@ -146,8 +271,12 @@ export default function RequestManager() {
     }
   }
 
-  function formatDate(date: string) {
-    return new Date(date).toLocaleDateString(
+  function formatDate(
+    date: string
+  ) {
+    return new Date(
+      date
+    ).toLocaleDateString(
       "en-US",
       {
         year: "numeric",
@@ -178,17 +307,18 @@ export default function RequestManager() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <section className="admin-card">
-        <p>Loading customer requests...</p>
-      </section>
+  const hasActiveFilters =
+    Boolean(
+      filters.search ||
+        filters.status ||
+        filters.dateFrom ||
+        filters.dateTo
     );
-  }
 
   return (
     <>
       <section className="admin-card request-manager">
+
         <div className="request-manager-header">
           <div>
             <h2>Requests</h2>
@@ -198,18 +328,146 @@ export default function RequestManager() {
               {requests.length === 1
                 ? "request"
                 : "requests"}{" "}
-              received.
+              found.
             </p>
           </div>
 
           <button
             type="button"
             className="admin-button secondary"
-            onClick={fetchRequests}
+            onClick={() =>
+              fetchRequests(filters)
+            }
+            disabled={isLoading}
           >
-            Refresh
+            {isLoading
+              ? "Loading..."
+              : "Refresh"}
           </button>
         </div>
+
+        {/* =========================
+            Search & Filters
+            ========================= */}
+
+        <div className="request-filters">
+
+          <div className="request-filter-search">
+            <label htmlFor="request-search">
+              Search
+            </label>
+
+            <input
+              id="request-search"
+              type="search"
+              value={filters.search}
+              onChange={(event) =>
+                updateFilter(
+                  "search",
+                  event.target.value
+                )
+              }
+              placeholder="Name, email, subject, or message..."
+            />
+          </div>
+
+          <div className="request-filter-field">
+            <label htmlFor="request-filter-status">
+              Status
+            </label>
+
+            <select
+              id="request-filter-status"
+              value={filters.status}
+              onChange={(event) =>
+                updateFilter(
+                  "status",
+                  event.target.value
+                )
+              }
+            >
+              <option value="">
+                All statuses
+              </option>
+
+              {statuses.map(
+                (status) => (
+                  <option
+                    key={status}
+                    value={status}
+                  >
+                    {status}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+
+          <div className="request-filter-field">
+            <label htmlFor="request-date-from">
+              From
+            </label>
+
+            <input
+              id="request-date-from"
+              type="date"
+              value={filters.dateFrom}
+              max={
+                filters.dateTo ||
+                undefined
+              }
+              onChange={(event) =>
+                updateFilter(
+                  "dateFrom",
+                  event.target.value
+                )
+              }
+            />
+          </div>
+
+          <div className="request-filter-field">
+            <label htmlFor="request-date-to">
+              To
+            </label>
+
+            <input
+              id="request-date-to"
+              type="date"
+              value={filters.dateTo}
+              min={
+                filters.dateFrom ||
+                undefined
+              }
+              onChange={(event) =>
+                updateFilter(
+                  "dateTo",
+                  event.target.value
+                )
+              }
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="admin-button secondary request-clear-filters"
+              onClick={
+                clearFilters
+              }
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        {isLoading && (
+          <div
+            className="request-filter-loading"
+            aria-live="polite"
+          >
+            Updating results...
+          </div>
+        )}
 
         {error && (
           <div
@@ -220,13 +478,19 @@ export default function RequestManager() {
           </div>
         )}
 
-        {requests.length === 0 ? (
+        {!isLoading &&
+        requests.length === 0 ? (
           <div className="request-empty">
-            <h3>No requests yet</h3>
+            <h3>
+              {hasActiveFilters
+                ? "No matching requests"
+                : "No requests yet"}
+            </h3>
 
             <p>
-              Customer requests will appear here when
-              they are submitted.
+              {hasActiveFilters
+                ? "Try changing your search or filter criteria."
+                : "Customer requests will appear here when they are submitted."}
             </p>
           </div>
         ) : (
@@ -234,77 +498,111 @@ export default function RequestManager() {
             <table className="request-table">
               <thead>
                 <tr>
-                  <th>Customer</th>
-                  <th>Subject</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th>Action</th>
+                  <th>
+                    Customer
+                  </th>
+
+                  <th>
+                    Subject
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Date
+                  </th>
+
+                  <th>
+                    Action
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
-                {requests.map((request) => (
-                  <tr key={request._id}>
-                    <td>
-                      <div className="request-customer">
-                        <strong>
-                          {request.customerName}
-                        </strong>
+                {requests.map(
+                  (request) => (
+                    <tr
+                      key={
+                        request._id
+                      }
+                    >
+                      <td>
+                        <div className="request-customer">
+                          <strong>
+                            {
+                              request.customerName
+                            }
+                          </strong>
 
-                        <span>
-                          {request.customerEmail}
+                          <span>
+                            {
+                              request.customerEmail
+                            }
+                          </span>
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className="request-subject">
+                          {
+                            request.subject
+                          }
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td>
-                      <span className="request-subject">
-                        {request.subject}
-                      </span>
-                    </td>
+                      <td>
+                        <span
+                          className={getStatusClass(
+                            request.status
+                          )}
+                        >
+                          {
+                            request.status
+                          }
+                        </span>
+                      </td>
 
-                    <td>
-                      <span
-                        className={getStatusClass(
-                          request.status
+                      <td>
+                        {formatDate(
+                          request.createdAt
                         )}
-                      >
-                        {request.status}
-                      </span>
-                    </td>
+                      </td>
 
-                    <td>
-                      {formatDate(
-                        request.createdAt
-                      )}
-                    </td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="admin-button small"
-                        onClick={() =>
-                          setSelectedRequest(
-                            request
-                          )
-                        }
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      <td>
+                        <button
+                          type="button"
+                          className="admin-button small"
+                          onClick={() =>
+                            setSelectedRequest(
+                              request
+                            )
+                          }
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>
         )}
       </section>
 
+      {/* =========================
+          Request Details Modal
+          ========================= */}
+
       {selectedRequest && (
         <div
           className="request-modal-backdrop"
           onClick={() =>
-            setSelectedRequest(null)
+            setSelectedRequest(
+              null
+            )
           }
         >
           <section
@@ -313,6 +611,7 @@ export default function RequestManager() {
               event.stopPropagation()
             }
           >
+
             <div className="request-modal-header">
               <div>
                 <p className="admin-kicker">
@@ -320,7 +619,9 @@ export default function RequestManager() {
                 </p>
 
                 <h2>
-                  {selectedRequest.subject}
+                  {
+                    selectedRequest.subject
+                  }
                 </h2>
               </div>
 
@@ -328,7 +629,9 @@ export default function RequestManager() {
                 type="button"
                 className="request-modal-close"
                 onClick={() =>
-                  setSelectedRequest(null)
+                  setSelectedRequest(
+                    null
+                  )
                 }
                 aria-label="Close request details"
               >
@@ -337,24 +640,35 @@ export default function RequestManager() {
             </div>
 
             <div className="request-details">
+
               <div className="request-detail">
-                <span>Customer</span>
+                <span>
+                  Customer
+                </span>
 
                 <strong>
-                  {selectedRequest.customerName}
+                  {
+                    selectedRequest.customerName
+                  }
                 </strong>
               </div>
 
               <div className="request-detail">
-                <span>Email</span>
+                <span>
+                  Email
+                </span>
 
                 <strong>
-                  {selectedRequest.customerEmail}
+                  {
+                    selectedRequest.customerEmail
+                  }
                 </strong>
               </div>
 
               <div className="request-detail">
-                <span>Submitted</span>
+                <span>
+                  Submitted
+                </span>
 
                 <strong>
                   {formatDate(
@@ -364,7 +678,9 @@ export default function RequestManager() {
               </div>
 
               <div className="request-detail">
-                <span>Last updated</span>
+                <span>
+                  Last updated
+                </span>
 
                 <strong>
                   {formatDate(
@@ -372,24 +688,32 @@ export default function RequestManager() {
                   )}
                 </strong>
               </div>
+
             </div>
 
             <div className="request-message">
-              <span>Request details</span>
+              <span>
+                Request details
+              </span>
 
               <p>
-                {selectedRequest.message}
+                {
+                  selectedRequest.message
+                }
               </p>
             </div>
 
             <div className="request-status-editor">
+
               <label htmlFor="request-status">
                 Update status
               </label>
 
               <select
                 id="request-status"
-                value={selectedRequest.status}
+                value={
+                  selectedRequest.status
+                }
                 onChange={(event) =>
                   updateStatus(
                     selectedRequest._id,
@@ -402,14 +726,16 @@ export default function RequestManager() {
                   selectedRequest._id
                 }
               >
-                {statuses.map((status) => (
-                  <option
-                    key={status}
-                    value={status}
-                  >
-                    {status}
-                  </option>
-                ))}
+                {statuses.map(
+                  (status) => (
+                    <option
+                      key={status}
+                      value={status}
+                    >
+                      {status}
+                    </option>
+                  )
+                )}
               </select>
 
               {updatingId ===
@@ -418,7 +744,9 @@ export default function RequestManager() {
                   Updating status...
                 </small>
               )}
+
             </div>
+
           </section>
         </div>
       )}

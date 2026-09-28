@@ -2814,3 +2814,144 @@ button { font-family: inherit; cursor: pointer; }
     padding: 1rem;
   }
 }
+
+/* =========================================================
+   Customer Request Search & Filtering
+   ========================================================= */
+
+.request-filters {
+  display: grid;
+
+  grid-template-columns:
+    minmax(240px, 2fr)
+    repeat(3, minmax(140px, 1fr))
+    auto;
+
+  gap: 0.9rem;
+
+  align-items: end;
+
+  margin-bottom: 1.25rem;
+
+  padding: 1rem;
+
+  border: 1px solid
+    rgba(36, 21, 18, 0.1);
+
+  border-radius: 12px;
+
+  background:
+    rgba(169, 129, 46, 0.045);
+}
+
+.request-filter-search,
+.request-filter-field {
+  display: grid;
+
+  gap: 0.4rem;
+}
+
+.request-filter-search label,
+.request-filter-field label {
+  color:
+    rgba(36, 21, 18, 0.62);
+
+  font-size: 0.72rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.07em;
+
+  text-transform: uppercase;
+}
+
+.request-filter-search input,
+.request-filter-field input,
+.request-filter-field select {
+  width: 100%;
+
+  min-height: 44px;
+
+  padding: 0.65rem 0.8rem;
+
+  border: 1px solid
+    rgba(36, 21, 18, 0.16);
+
+  border-radius: 8px;
+
+  outline: none;
+
+  background: #fffaf5;
+
+  color: #241512;
+
+  font: inherit;
+
+  font-size: 0.88rem;
+}
+
+.request-filter-search input:focus,
+.request-filter-field input:focus,
+.request-filter-field select:focus {
+  border-color: #a9812e;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(169, 129, 46, 0.12);
+}
+
+.request-filter-search input::placeholder {
+  color:
+    rgba(36, 21, 18, 0.42);
+}
+
+.request-clear-filters {
+  min-height: 44px;
+
+  white-space: nowrap;
+}
+
+.request-filter-loading {
+  margin: 0 0 1rem;
+
+  color:
+    rgba(36, 21, 18, 0.55);
+
+  font-size: 0.82rem;
+}
+
+
+/* =========================================================
+   Search & Filtering Responsive
+   ========================================================= */
+
+@media (max-width: 1050px) {
+  .request-filters {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .request-filter-search {
+    grid-column:
+      1 / -1;
+  }
+
+  .request-clear-filters {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 600px) {
+  .request-filters {
+    grid-template-columns:
+      1fr;
+  }
+
+  .request-filter-search {
+    grid-column: auto;
+  }
+
+  .request-clear-filters {
+    width: 100%;
+  }
+}
