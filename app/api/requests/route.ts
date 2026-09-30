@@ -3,8 +3,11 @@ import { NextResponse } from "next/server";
 import CustomerRequest from "@/models/Request";
 import User from "@/models/User";
 import { connectToDatabase } from "@/lib/mongodb";
-import { getUserSession } from "@/lib/userAuth";
-import { isAdminAuthenticated } from "@/lib/adminAuth";
+import {
+  getCurrentUser,
+  userHasPermission,
+  PERMISSIONS,
+} from "@/lib/rbac";
 
 const REQUEST_STATUSES = [
   "Pending",
@@ -21,9 +24,14 @@ export async function POST(
   request: globalThis.Request
 ) {
   try {
-    const userId = await getUserSession();
+    const currentUser = await getCurrentUser();
 
-    if (!userId) {
+if (
+  !currentUser ||
+  !(await userHasPermission(
+    PERMISSIONS.CREATE_REQUEST
+  ))
+) {
       return NextResponse.json(
         {
           message:
@@ -81,9 +89,9 @@ export async function POST(
 
     await connectToDatabase();
 
-    const user = await User.findById(userId).select(
-      "name email"
-    );
+    const user = await User.findById(
+  currentUser.id
+).select("name email");
 
     if (!user) {
       return NextResponse.json(
@@ -135,8 +143,19 @@ export async function GET(
   request: globalThis.Request
 ) {
   try {
-    const isAdmin =
-      await isAdminAuthenticated();
+    const currentUser = await getCurrentUser();
+
+if (!currentUser) {
+  return NextResponse.json(
+    { message: "Unauthorized." },
+    { status: 401 }
+  );
+}
+
+const canViewAllRequests =
+  await userHasPermission(
+    PERMISSIONS.VIEW_ALL_REQUESTS
+  );
 
     const { searchParams } = new URL(
       request.url
@@ -294,7 +313,7 @@ export async function GET(
      * Admin:
      * Search/filter all customer requests.
      */
-    if (isAdmin) {
+   if (canViewAllRequests) {
       requests =
         await CustomerRequest.find(
           filters
@@ -308,27 +327,15 @@ export async function GET(
        * Customer:
        * Only search/filter their own requests.
        */
-      const userId =
-        await getUserSession();
-
-      if (!userId) {
-        return NextResponse.json(
-          {
-            message: "Unauthorized.",
-          },
-          { status: 401 }
-        );
-      }
-
-      requests =
-        await CustomerRequest.find({
-          ...filters,
-          customer: userId,
-        })
-          .sort({
-            createdAt: -1,
-          })
-          .lean();
+      
+   requests = await CustomerRequest.find({
+  ...filters,
+  customer: currentUser.id,
+})
+  .sort({
+    createdAt: -1,
+  })
+  .lean();;
     }
 
     return NextResponse.json({

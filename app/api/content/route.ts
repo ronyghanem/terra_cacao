@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import Content from "@/models/Content";
-import { isAdminAuthenticated } from "@/lib/adminAuth";
-
+import {
+  userHasPermission,
+  PERMISSIONS,
+} from "@/lib/rbac";
 export async function GET() {
   try {
-    const authenticated = await isAdminAuthenticated();
-
+const authenticated =
+  await userHasPermission(
+    PERMISSIONS.MANAGE_CONTENT
+  );
     if (!authenticated) {
       return NextResponse.json(
         {
@@ -46,8 +50,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authenticated = await isAdminAuthenticated();
-
+const authenticated =
+  await userHasPermission(
+    PERMISSIONS.MANAGE_CONTENT
+  );
     if (!authenticated) {
       return NextResponse.json(
         {

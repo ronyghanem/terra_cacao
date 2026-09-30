@@ -4,11 +4,13 @@ import ReducedMotionVideo from "@/components/ReducedMotionVideo";
 import ContactForm from "@/components/ContactForm";
 import ContentBars from "@/components/ContentBars";
 import Services from "@/components/Services";
-import { getUserSession } from "@/lib/userAuth";
+import { getCurrentUser } from "@/lib/rbac";
 
 export default async function Home() {
-  const userId = await getUserSession();
-const isLoggedIn = Boolean(userId);
+  const currentUser = await getCurrentUser();
+
+  const isLoggedIn = Boolean(currentUser);
+  const isAdmin = currentUser?.role === "admin";
   return (
     <>
       <a className="skip-link" href="#main">
@@ -22,7 +24,7 @@ const isLoggedIn = Boolean(userId);
           </a>
 
           {/* React mobile navigation */}
-          <MobileNav />
+        <MobileNav isAdmin={isAdmin} />
 
 <div className="header-actions">
   <a className="btn btn-line nav-cta" href="#bars">

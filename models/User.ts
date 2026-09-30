@@ -23,6 +23,13 @@ const UserSchema = new Schema(
       required: true,
       minlength: 8,
     },
+
+    role: {
+      type: String,
+      enum: ["admin", "employee"],
+      default: "employee",
+      required: true,
+    },
   },
   {
     timestamps: true,

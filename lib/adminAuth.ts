@@ -1,9 +1,7 @@
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/rbac";
 
 export async function isAdminAuthenticated() {
-  const cookieStore = await cookies();
+  const user = await getCurrentUser();
 
-  const adminCookie = cookieStore.get("terra_admin");
-
-  return adminCookie?.value === "authenticated";
+  return user?.role === "admin";
 }

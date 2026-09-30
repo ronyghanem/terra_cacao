@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 import { connectToDatabase } from "@/lib/mongodb";
-import { isAdminAuthenticated } from "@/lib/adminAuth";
+import {
+  userHasPermission,
+  PERMISSIONS,
+} from "@/lib/rbac";
 import Content from "@/models/Content";
 
 type RouteContext = {
@@ -15,8 +18,10 @@ export async function PUT(
 ) {
   try {
     // Check admin authentication
-    const authenticated = await isAdminAuthenticated();
-
+const authenticated =
+  await userHasPermission(
+    PERMISSIONS.MANAGE_CONTENT
+  );
     if (!authenticated) {
       return NextResponse.json(
         {
@@ -148,8 +153,10 @@ export async function DELETE(
 ) {
   try {
     // Check admin authentication
-    const authenticated = await isAdminAuthenticated();
-
+const authenticated =
+  await userHasPermission(
+    PERMISSIONS.MANAGE_CONTENT
+  );
     if (!authenticated) {
       return NextResponse.json(
         {

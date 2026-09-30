@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
-import { isAdminAuthenticated } from "@/lib/adminAuth";
+import {
+  userHasPermission,
+  PERMISSIONS,
+} from "@/lib/rbac";
 import Service from "@/models/Service";
 
 type RouteContext = {
@@ -13,12 +16,19 @@ export async function PUT(
   { params }: RouteContext
 ) {
   try {
-    if (!(await isAdminAuthenticated())) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized." },
-        { status: 401 }
-      );
-    }
+    if (
+  !(await userHasPermission(
+    PERMISSIONS.MANAGE_SERVICES
+  ))
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "You do not have permission to manage services.",
+    },
+    { status: 403 }
+  );
+}
 
     const { id } = await params;
 
@@ -96,12 +106,19 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
-    if (!(await isAdminAuthenticated())) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized." },
-        { status: 401 }
-      );
-    }
+   if (
+  !(await userHasPermission(
+    PERMISSIONS.MANAGE_SERVICES
+  ))
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "You do not have permission to manage services.",
+    },
+    { status: 403 }
+  );
+}
 
     const { id } = await params;
 

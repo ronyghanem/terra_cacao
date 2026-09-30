@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-export default function MobileNav() {
+type MobileNavProps = {
+  isAdmin: boolean;
+};
+
+export default function MobileNav({
+  isAdmin,
+}: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const closeMenu = () => {
@@ -55,6 +61,12 @@ export default function MobileNav() {
         <a href="#contact" onClick={closeMenu}>
           Contact
         </a>
+
+        {isAdmin && (
+          <a href="/admin/content" onClick={closeMenu}>
+            Content
+          </a>
+        )}
       </nav>
     </>
   );

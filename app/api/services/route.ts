@@ -1,16 +1,26 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { isAdminAuthenticated } from "@/lib/adminAuth";
+import {
+  userHasPermission,
+  PERMISSIONS,
+} from "@/lib/rbac";
 import Service from "@/models/Service";
 
 export async function GET() {
   try {
-    if (!(await isAdminAuthenticated())) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized." },
-        { status: 401 }
-      );
-    }
+    if (
+  !(await userHasPermission(
+    PERMISSIONS.MANAGE_SERVICES
+  ))
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "You do not have permission to manage services.",
+    },
+    { status: 403 }
+  );
+}
 
     await connectToDatabase();
 
@@ -34,12 +44,19 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    if (!(await isAdminAuthenticated())) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized." },
-        { status: 401 }
-      );
-    }
+   if (
+  !(await userHasPermission(
+    PERMISSIONS.MANAGE_SERVICES
+  ))
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "You do not have permission to manage services.",
+    },
+    { status: 403 }
+  );
+}
 
     const body = await request.json();
 

@@ -3,15 +3,18 @@ import bcrypt from "bcryptjs";
 
 import User from "@/models/User";
 import { connectToDatabase } from "@/lib/mongodb";
+import { ROLES } from "@/lib/rbac";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
     const name = String(body.name || "").trim();
+
     const email = String(body.email || "")
       .trim()
       .toLowerCase();
+
     const password = String(body.password || "");
 
     // Backend validation
@@ -19,7 +22,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Name, email, and password are required.",
+          message:
+            "Name, email, and password are required.",
         },
         { status: 400 }
       );
@@ -29,7 +33,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Name must be between 2 and 100 characters.",
+          message:
+            "Name must be between 2 and 100 characters.",
         },
         { status: 400 }
       );
@@ -42,7 +47,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Please provide a valid email address.",
+          message:
+            "Please provide a valid email address.",
         },
         { status: 400 }
       );
@@ -52,7 +58,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Password must be at least 8 characters.",
+          message:
+            "Password must be at least 8 characters.",
         },
         { status: 400 }
       );
@@ -70,7 +77,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "An account with this email already exists.",
+          message:
+            "An account with this email already exists.",
         },
         { status: 409 }
       );
@@ -82,32 +90,41 @@ export async function POST(request: Request) {
       12
     );
 
-    // Create user
+    // IMPORTANT:
+    // Public registration can ONLY create employees.
+    // The client cannot choose the role.
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
+      role: ROLES.EMPLOYEE,
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Account created successfully.",
+        message:
+          "Account created successfully.",
         user: {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
+          role: user.role,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error(
+      "Registration error:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to create account.",
+        message:
+          "Unable to create account.",
       },
       { status: 500 }
     );
